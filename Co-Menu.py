@@ -31,9 +31,9 @@ COFLIX_FILE = "Co-flix.py"
 COCHAN_FILE = "Co-chan.py"
 COTUBE_FILE = "Co-tube.py"
 
-COFLIX_URL  = "https://victime.online/Film/Im_not_film/I_am/get.php"
+COFLIX_URL  = None
 COCHAN_URL  = "https://raw.githubusercontent.com/Bicode-dev/anime_Co-Chan_download/main/Co-chan.py"
-COTUBE_URL  = "https://raw.githubusercontent.com/Colmax06/youtube_Co-tube_downloader/main/Co-tube.py"
+COTUBE_URL  = "https://raw.githubusercontent.com/Bicode-dev/Co-tube/main/Co-tube.py"
 
 
 # ── Détection Termux ──────────────────────────────────────────────────────────
