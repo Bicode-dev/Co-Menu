@@ -693,43 +693,21 @@ def _ensure_scripts() -> bool:
         _rename_if_needed(py, alias, COSAMA_FILE)
 
     downloadable = [
-        ("Co-chan", URL_COCHAN, os.path.join(py, COCHAN_FILE)),
-        ("Co-sama", URL_COSAMA, os.path.join(py, COSAMA_FILE)),
-        ("Co-tube", URL_COTUBE, os.path.join(py, COTUBE_FILE)),
+        ("Co-chan", os.path.join(py, COCHAN_FILE)),
+        ("Co-sama", os.path.join(py, COSAMA_FILE)),
+        ("Co-tube", os.path.join(py, COTUBE_FILE)),
     ]
 
-    missing = [
-        (lbl, url, dst)
-        for lbl, url, dst in downloadable
-        if not os.path.isfile(dst)
-    ]
+    missing = [lbl for lbl, dst in downloadable if not os.path.isfile(dst)]
 
-    if not missing:
-        return True
-
-    ConsoleUI.clear()
-    ConsoleUI.print_banner()
-    print(ConsoleUI.CYAN + "\n  " + "=" * 58 + ConsoleUI.RESET)
-    print(
-        f"  {ConsoleUI.BOLD}  Scripts manquants"
-        f" — telechargement automatique{ConsoleUI.RESET}"
-    )
-    print(ConsoleUI.CYAN + "  " + "=" * 58 + ConsoleUI.RESET + "\n")
-
-    all_ok = all(_download_file(url, dst, lbl) for lbl, url, dst in missing)
-
-    if not all_ok:
-        ConsoleUI.warn("Certains fichiers n'ont pas pu etre telecharges.")
-        try:
-            input(
-                f"\n  {ConsoleUI.DIM}"
-                "Appuyez sur Entree pour continuer..."
-                f"{ConsoleUI.RESET}"
+    if missing:
+        for lbl in missing:
+            ConsoleUI.warn(
+                f"{lbl} est absent — utilisez le menu "
+                f"{ConsoleUI.YELLOW}'Mise a jour'{ConsoleUI.RESET} pour l'installer."
             )
-        except (EOFError, OSError):
-            pass
 
-    return all_ok
+    return len(missing) == 0
 
 
 def _update_scripts() -> None:
