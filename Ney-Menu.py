@@ -71,22 +71,6 @@ def _is_termux() -> bool:
     )
 
 
-# ── Chemins selon la plateforme ───────────────────────────────────────────────
-def _comenu_install_path() -> str:
-    """Retourne le chemin d'installation de Ney-Menu.py.
-
-    - Windows          : %LOCALAPPDATA%\\Koyney\\Ney-Menu\\Ney-Menu.py
-    - Linux/Mac/Termux : ~/.local/share/Koyney/Ney-Menu/Ney-Menu.py
-    """
-    if os.name == "nt":
-        local = os.environ.get("LOCALAPPDATA") or os.path.join(
-            os.path.expanduser("~"), "AppData", "Local"
-        )
-        return os.path.join(local, "Koyney", "Ney-Menu", "Ney-Menu.py")
-    return os.path.join(
-        os.path.expanduser("~"), ".local", "share", "Koyney", "Ney-Menu", "Ney-Menu.py"
-    )
-
 
 def _py_dir() -> str:
     """Retourne le dossier de stockage des scripts enfants (créé si absent).
