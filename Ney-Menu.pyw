@@ -42,7 +42,7 @@ VERSION = "2.2"
 # ── URLs ───────────────────────────────────────────────────────────────────────
 URL_NEYMENU = (
     "https://raw.githubusercontent.com/Koyney/Ney-Menu"
-    "/refs/heads/main/Ney-Menu.py"
+    "/refs/heads/main/Ney-Menu.pyw"
 )
 URL_COTUBE = (
     "https://raw.githubusercontent.com/Koyney/Ney-Tube"
@@ -331,8 +331,10 @@ class StatusChip(QWidget):
         )
 
 
-class MenuButton(QPushButton):
-    """Bouton de menu avec icône gauche et flèche droite."""
+class MenuButton(QFrame):
+    """Bouton de menu (QFrame) — évite les artefacts de fond des QPushButton."""
+
+    clicked = pyqtSignal()
 
     def __init__(
         self,
@@ -343,14 +345,14 @@ class MenuButton(QPushButton):
         parent=None,
     ):
         super().__init__(parent)
-        self._accent   = accent
-        self._danger   = danger
-        self._hovered  = False
+        self._accent  = accent
+        self._danger  = danger
+        self._hovered = False
+        self._enabled = True
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setMinimumHeight(68)
         self.setCursor(Qt.PointingHandCursor)
-        self.setFlat(True)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 0, 20, 0)
@@ -358,22 +360,26 @@ class MenuButton(QPushButton):
 
         # Textes
         texts = QVBoxLayout()
-        texts.setSpacing(2)
+        texts.setSpacing(3)
+
         self._lbl_main = QLabel(label)
         font_main = QFont()
         font_main.setPointSize(13)
         font_main.setWeight(QFont.Bold)
         self._lbl_main.setFont(font_main)
+        self._lbl_main.setAttribute(Qt.WA_TransparentForMouseEvents)
 
         texts.addWidget(self._lbl_main)
         if sublabel:
             self._lbl_sub = QLabel(sublabel)
-            self._lbl_sub.setStyleSheet(f"color: {TEXT_DIM}; font-size: 11px;")
+            self._lbl_sub.setAttribute(Qt.WA_TransparentForMouseEvents)
             texts.addWidget(self._lbl_sub)
+        else:
+            self._lbl_sub = None
 
         # Flèche droite
         self._arrow = QLabel("›")
-        self._arrow.setStyleSheet(f"font-size: 22px; color: {TEXT_DIM};")
+        self._arrow.setAttribute(Qt.WA_TransparentForMouseEvents)
 
         layout.addLayout(texts)
         layout.addStretch()
@@ -382,39 +388,167 @@ class MenuButton(QPushButton):
         self._refresh_style(False)
 
     def _refresh_style(self, hovered: bool) -> None:
+        if not self._enabled:
+            self.setStyleSheet(f"""
+                QFrame {{
+                    background: {VOID_2};
+                    border: 1.5px solid {BORDER};
+                    border-radius: 10px;
+                }}
+                QLabel {{
+                    border: none;
+                    background: transparent;
+                }}
+            """)
+            self._lbl_main.setStyleSheet("color: #3a3a4a; border: none; background: transparent;")
+            if self._lbl_sub:
+                self._lbl_sub.setStyleSheet("color: #2a2a38; font-size: 11px; border: none; background: transparent;")
+            self._arrow.setStyleSheet("font-size: 22px; color: #2a2a38; border: none; background: transparent;")
+            return
+
         if self._danger:
             bg    = "#1a0a0a" if hovered else VOID_2
             fg    = TEXT_ERR
-            bord  = TEXT_ERR if hovered else BORDER
-            arrow = TEXT_ERR if hovered else TEXT_DIM
+            bord  = TEXT_ERR  if hovered else BORDER
+            sub   = "#7a2020" if hovered else TEXT_DIM
+            arrow = TEXT_ERR  if hovered else TEXT_DIM
         elif self._accent:
             bg    = VOLT_DARK if hovered else VOID_2
             fg    = VOLT      if hovered else TEXT_MAIN
             bord  = VOLT      if hovered else BORDER_LT
+            sub   = VOLT_DIM  if hovered else TEXT_DIM
             arrow = VOLT      if hovered else TEXT_DIM
         else:
             bg    = VOID_3    if hovered else VOID_2
             fg    = TEXT_MAIN
             bord  = BORDER_LT if hovered else BORDER
+            sub   = TEXT_DIM
             arrow = TEXT_MAIN if hovered else TEXT_DIM
 
         self.setStyleSheet(f"""
-            QPushButton {{
+            QFrame {{
                 background: {bg};
                 border: 1.5px solid {bord};
                 border-radius: 10px;
             }}
-            QPushButton:disabled {{
-                background: {VOID_2};
-                border-color: {BORDER};
+            QLabel {{
+                border: none;
+                background: transparent;
             }}
         """)
-        self._lbl_main.setStyleSheet(f"color: {fg}; background: transparent;")
-        self._arrow.setStyleSheet(f"font-size: 22px; color: {arrow};")
+        self._lbl_main.setStyleSheet(f"color: {fg}; border: none; background: transparent;")
+        if self._lbl_sub:
+            self._lbl_sub.setStyleSheet(f"color: {sub}; font-size: 11px; border: none; background: transparent;")
+        self._arrow.setStyleSheet(f"font-size: 22px; color: {arrow}; border: none; background: transparent;")
+
+    def setEnabled(self, enabled: bool) -> None:
+        self._enabled = enabled
+        self.setCursor(Qt.PointingHandCursor if enabled else Qt.ArrowCursor)
+        self._refresh_style(False)
+
+    def isEnabled(self) -> bool:
+        return self._enabled
 
     def enterEvent(self, e):
-        self._hovered = True
-        self._refresh_style(True)
+        if self._enabled:
+            self._hovered = True
+            self._refresh_style(True)
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        self._hovered = False
+        self._refresh_style(self._hovered)
+        super().leaveEvent(e)
+
+    def mousePressEvent(self, e):
+        if self._enabled and e.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(e)
+
+
+class InlineUpdateButton(QFrame):
+    """Petit bouton ↓ inline pour MàJ d'un script individuel."""
+
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._hovered = False
+        self._enabled = True
+
+        self.setFixedSize(52, 68)
+        self.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        self._icon = QLabel("↓")
+        self._icon.setAlignment(Qt.AlignCenter)
+        self._icon.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+        self._txt = QLabel("MàJ")
+        self._txt.setAlignment(Qt.AlignCenter)
+        self._txt.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+        layout.addStretch()
+        layout.addWidget(self._icon)
+        layout.addWidget(self._txt)
+        layout.addStretch()
+
+        self._refresh_style(False)
+
+    def _refresh_style(self, hovered: bool) -> None:
+        if not self._enabled:
+            self.setStyleSheet(f"""
+                QFrame {{
+                    background: {VOID_2};
+                    border: 1.5px solid {BORDER};
+                    border-radius: 10px;
+                }}
+                QLabel {{
+                    border: none;
+                    background: transparent;
+                }}
+            """)
+            self._icon.setStyleSheet("font-size: 16px; color: #2a2a38; border: none; background: transparent;")
+            self._txt.setStyleSheet("font-size: 9px; color: #2a2a38; letter-spacing: 1px; border: none; background: transparent;")
+            return
+
+        if hovered:
+            bg   = VOLT_DARK
+            bord = VOLT
+            fg   = VOLT
+        else:
+            bg   = VOID_2
+            bord = BORDER_LT
+            fg   = TEXT_DIM
+
+        self.setStyleSheet(f"""
+            QFrame {{
+                background: {bg};
+                border: 1.5px solid {bord};
+                border-radius: 10px;
+            }}
+            QLabel {{
+                border: none;
+                background: transparent;
+            }}
+        """)
+        self._icon.setStyleSheet(f"font-size: 16px; color: {fg}; border: none; background: transparent;")
+        self._txt.setStyleSheet(
+            f"font-size: 9px; color: {fg}; letter-spacing: 1px; font-weight: 700; border: none; background: transparent;"
+        )
+
+    def setEnabled(self, enabled: bool) -> None:
+        self._enabled = enabled
+        self.setCursor(Qt.PointingHandCursor if enabled else Qt.ArrowCursor)
+        self._refresh_style(False)
+
+    def enterEvent(self, e):
+        if self._enabled:
+            self._hovered = True
+            self._refresh_style(True)
         super().enterEvent(e)
 
     def leaveEvent(self, e):
@@ -422,9 +556,10 @@ class MenuButton(QPushButton):
         self._refresh_style(False)
         super().leaveEvent(e)
 
-    def setEnabled(self, enabled: bool) -> None:
-        super().setEnabled(enabled)
-        self._refresh_style(self._hovered and enabled)
+    def mousePressEvent(self, e):
+        if self._enabled and e.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(e)
 
 
 class LogBar(QWidget):
@@ -575,29 +710,42 @@ class NeyMenuWindow(QMainWindow):
         outer.addWidget(section_lbl)
 
         # ── Boutons ────────────────────────────────────────────────────────────
+
+        # Co-flix (pas de bouton MàJ)
         self._btn_coflix = MenuButton(
             "🎬  Films / Séries",
             sublabel="CO-FLIX",
             accent=True,
         )
         self._btn_coflix.clicked.connect(self._action_coflix)
-        self._btn_coflix.hide()
-        outer.addWidget(self._btn_coflix)
+        self._row_coflix = QWidget()
+        self._row_coflix.setStyleSheet("background: transparent;")
+        rl_cf = QHBoxLayout(self._row_coflix)
+        rl_cf.setContentsMargins(0, 0, 0, 0)
+        rl_cf.setSpacing(8)
+        rl_cf.addWidget(self._btn_coflix, 1)
+        self._row_coflix.hide()
+        outer.addWidget(self._row_coflix)
 
+        # Ney-Tube + bouton MàJ inline
         self._btn_neytube = MenuButton(
             "▶  YouTube",
             sublabel="NEY-TUBE",
             accent=True,
         )
         self._btn_neytube.clicked.connect(self._action_neytube)
-        outer.addWidget(self._btn_neytube)
 
-        self._btn_update = MenuButton(
-            "↓  Mise à jour des scripts",
-            sublabel="Ney-Tube.py — GitHub",
-        )
-        self._btn_update.clicked.connect(self._action_update)
-        outer.addWidget(self._btn_update)
+        self._btn_upd_neytube = InlineUpdateButton()
+        self._btn_upd_neytube.clicked.connect(self._action_update_neytube)
+
+        row_nt = QWidget()
+        row_nt.setStyleSheet("background: transparent;")
+        rl_nt = QHBoxLayout(row_nt)
+        rl_nt.setContentsMargins(0, 0, 0, 0)
+        rl_nt.setSpacing(8)
+        rl_nt.addWidget(self._btn_neytube, 1)
+        rl_nt.addWidget(self._btn_upd_neytube)
+        outer.addWidget(row_nt)
 
         self._btn_quit = MenuButton("✕  Quitter", danger=True)
         self._btn_quit.clicked.connect(self._goodbye)
@@ -669,7 +817,7 @@ class NeyMenuWindow(QMainWindow):
                 coflix_present = True
 
         self._coflix_present = coflix_present
-        self._btn_coflix.setVisible(coflix_present)
+        self._row_coflix.setVisible(coflix_present)
 
         self._set_menu_enabled(True)
         self._logbar.push("Prêt.", "ok")
@@ -690,6 +838,9 @@ class NeyMenuWindow(QMainWindow):
             return
         self._logbar.push("Lancement de Ney-Tube…", "info")
         _open_in_terminal(path)
+
+    def _action_update_neytube(self) -> None:
+        self._action_update()
 
     def _action_update(self) -> None:
         self._set_menu_enabled(False)
@@ -715,7 +866,7 @@ class NeyMenuWindow(QMainWindow):
         self._logbar.push(msg, level)
 
     def _set_menu_enabled(self, enabled: bool) -> None:
-        for btn in (self._btn_coflix, self._btn_neytube, self._btn_update):
+        for btn in (self._btn_coflix, self._btn_neytube, self._btn_upd_neytube, self._btn_quit):
             btn.setEnabled(enabled)
 
     def _track(self, worker: QThread) -> None:
