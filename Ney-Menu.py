@@ -51,7 +51,7 @@ URL_COTUBE = (
 
 # ── Noms des scripts enfants ──────────────────────────────────────────────────
 COFLIX_FILE = "Co-flix.py"
-COTUBE_FILE = "Ney-tube.py"
+COTUBE_FILE = "Ney-Tube.py"
 
 # ── Cache réseau (url -> (taille_octets, timestamp)) ─────────────────────────
 _NET_CACHE: dict[str, tuple[int, float]] = {}
@@ -633,7 +633,7 @@ def _refresh_status(silent: bool = False) -> None:
     py = _py_dir()
 
     scripts: list[tuple[str, str, str | None]] = [
-        ("Ney-tube.py", os.path.join(py, COTUBE_FILE), URL_COTUBE),
+        ("Ney-Tube.py", os.path.join(py, COTUBE_FILE), URL_COTUBE),
     ]
 
     # Co-flix : uniquement si le fichier est présent
@@ -672,7 +672,7 @@ def _ensure_scripts() -> bool:
         _rename_if_needed(py, alias, COFLIX_FILE)
 
     downloadable = [
-        ("Ney-tube", os.path.join(py, COTUBE_FILE)),
+        ("Ney-Tube", os.path.join(py, COTUBE_FILE)),
     ]
 
     missing = [lbl for lbl, dst in downloadable if not os.path.isfile(dst)]
@@ -692,7 +692,7 @@ def _update_scripts() -> None:
     py = _py_dir()
 
     updatable = [
-        ("Ney-tube",   URL_COTUBE, os.path.join(py, COTUBE_FILE)),
+        ("Ney-Tube",   URL_COTUBE, os.path.join(py, COTUBE_FILE)),
     ]
 
     ConsoleUI.clear()
@@ -881,7 +881,7 @@ def launch_coflix() -> None:
 
 
 def launch_cotube() -> None:
-    """Lance Ney-tube."""
+    """Lance Ney-Tube."""
     _launch(COTUBE_FILE, "neytube")
     _cleanup_pycache()
 
