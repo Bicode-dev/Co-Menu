@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NEY-MENU — Lance CO-FLIX (optionnel) et NEY-TUBE.
+"""NEY-MENU — Gestionnaire de la Koyney Suite (style store).
 
 Interface TUI Textual — fonctionne sur PC (Windows / Linux / macOS)
 et sur Termux / Android sans aucune dépendance graphique.
@@ -23,7 +23,6 @@ from typing import Callable
 
 # ── Détection plateforme ──────────────────────────────────────────────────────
 def _is_termux() -> bool:
-    """Retourne True si l'exécution se fait dans Termux (Android)."""
     return os.name != "nt" and (
         "ANDROID_STORAGE" in os.environ
         or "com.termux" in os.environ.get("PREFIX", "")
@@ -31,10 +30,10 @@ def _is_termux() -> bool:
 
 _TERMUX = _is_termux()
 
-# ── Version ────────────────────────────────────────────────────────────────────
-VERSION = "3.0"
+# ── Version ───────────────────────────────────────────────────────────────────
+VERSION = "3.1"
 
-# ── URLs ───────────────────────────────────────────────────────────────────────
+# ── URLs ──────────────────────────────────────────────────────────────────────
 URL_NEYMENU = (
     "https://raw.githubusercontent.com/Koyney/Ney-Menu"
     "/refs/heads/main/Ney-Menu.py"
@@ -48,7 +47,29 @@ COFLIX_FILE = "Co-flix.py"
 COTUBE_FILE = "Ney-Tube.pyw"
 
 _NET_CACHE: dict[str, tuple[int, float]] = {}
-_CACHE_TTL = 300  # secondes
+_CACHE_TTL = 300
+
+# ── Registre des scripts de la suite ─────────────────────────────────────────
+SCRIPTS: list[dict] = [
+    {
+        "id":   "neytube",
+        "name": "Ney-Tube",
+        "type": "script python",
+        "icon": "▶",
+        "desc": "Téléchargeur de vidéos YouTube et plateformes supportées.",
+        "file": COTUBE_FILE,
+        "url":  URL_COTUBE,
+    },
+    {
+        "id":   "coflix",
+        "name": "Co-Flix",
+        "type": "script python",
+        "icon": "🎬",
+        "desc": "Visionneuse de films et séries. Fourni séparément.",
+        "file": COFLIX_FILE,
+        "url":  None,  # pas d'URL d'installation automatique
+    },
+]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -56,12 +77,6 @@ _CACHE_TTL = 300  # secondes
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _py_dir() -> str:
-    """Retourne le dossier de stockage des scripts enfants (créé si absent).
-
-    - Windows          : %LOCALAPPDATA%\\Koyney\\Ney-Menu\\
-    - Termux / Android : ~/.local/Koyney/Ney-Menu/
-    - Linux / macOS    : ~/.local/share/Koyney/Ney-Menu/
-    """
     if os.name == "nt":
         local = os.environ.get("LOCALAPPDATA") or os.path.join(
             os.path.expanduser("~"), "AppData", "Local"
@@ -110,7 +125,6 @@ def _cleanup_pycache() -> None:
 
 
 def _open_in_terminal(script_path: str) -> None:
-    """Lance un script Python dans un nouveau terminal (PC uniquement)."""
     py = sys.executable
     if os.name == "nt":
         subprocess.Popen(
@@ -142,11 +156,6 @@ def _download_file(
     label: str,
     progress_cb: Callable[[int], None] | None = None,
 ) -> bool:
-    """Télécharge *url* vers *dest*.
-
-    Si progress_cb est fourni, il est appelé avec un pourcentage (0-100)
-    à chaque bloc reçu. Retourne True si le téléchargement a réussi.
-    """
     parent = os.path.dirname(dest)
     if parent:
         os.makedirs(parent, exist_ok=True)
@@ -176,15 +185,10 @@ def _download_file(
 def _compute_one_status(
     label: str, path: str, url: str | None
 ) -> tuple[str, str, str]:
-    """Calcule le statut d'un script.
-
-    Retourne (label, badge_texte, status_key).
-    status_key : "ok" | "update" | "missing" | "unknown"
-    """
     if url is None:
         return (label, "✓ Présent", "ok")
     if not os.path.isfile(path):
-        return (label, "✗ Manquant", "missing")
+        return (label, "↓ À installer", "missing")
     local_size  = os.path.getsize(path)
     remote_size = _get_remote_size(url)
     if remote_size <= 0:
@@ -207,9 +211,7 @@ def _rename_if_needed(folder: str, src_name: str, dst_name: str) -> None:
 
 
 def _launch(filename: str, module_name: str) -> None:
-    """Charge et exécute le main() d'un script Python dans _py_dir() (Termux)."""
     import importlib.machinery
-
     path = os.path.join(_py_dir(), filename)
     if not os.path.isfile(path):
         return
@@ -234,334 +236,577 @@ def launch_cotube() -> None:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Interface Textual — PC + Termux / Android
+#  Interface Textual — style "store"
 # ══════════════════════════════════════════════════════════════════════════════
+
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal
-from textual.widgets import Button, ProgressBar, Static, Rule
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Button, ProgressBar, Static, Input, ListView, ListItem
 from textual import on, work
 
-
-# ── Palette Void + Volt ───────────────────────────────────────────────────────
-_CSS = f"""
-/* ── Fond global ── */
-Screen {{
-    background: #09090b;
-    align: center top;
-}}
-
-/* ── Conteneur principal ── */
-#main {{
-    width: 64;
-    height: auto;
-    background: #09090b;
-    padding: 1 0;
-}}
-
-/* ── En-tête ── */
-#header {{
-    background: #111116;
-    border: tall #1f1f2e;
-    padding: 1 3;
+_CSS = """
+/* ── Global ── */
+Screen {
+    background: #09090c;
+}
+#main {
     width: 100%;
-    height: auto;
-    margin-bottom: 1;
-}}
-#brand-title {{
-    text-align: center;
-    color: #c6f135;
-    text-style: bold;
-    width: 100%;
-}}
-#brand-subtitle {{
-    text-align: center;
-    color: #5a5a6e;
-    width: 100%;
-}}
-#brand-version {{
-    text-align: center;
-    color: #2e2e42;
-    width: 100%;
-}}
+    height: 100%;
+    background: #09090c;
+}
 
-/* ── Carte de statuts ── */
-#status-bar {{
-    background: #111116;
-    border: tall #1f1f2e;
+/* ── En-tête store ── */
+#store-header {
+    height: 3;
+    background: #0f0f13;
+    border-bottom: tall #1a1a26;
     padding: 0 2;
     width: 100%;
-    height: 3;
-    margin-bottom: 1;
-}}
-#scripts-label {{
-    color: #3a3a52;
-    text-style: bold;
-    width: auto;
-    content-align: left middle;
-}}
-#chip-neytube {{
-    width: auto;
-    content-align: right middle;
-    color: #5a5a6e;
-    margin-left: 2;
-}}
-#chip-coflix {{
-    width: auto;
-    content-align: right middle;
-    color: #5a5a6e;
-    margin-left: 2;
-    display: none;
-}}
-.chip-ok      {{ color: #4cd97b; }}
-.chip-update  {{ color: #f5a623; }}
-.chip-missing {{ color: #f53c3c; }}
-.chip-unknown {{ color: #5a5a6e; }}
-
-/* ── Séparateur Volt ── */
-Rule {{
-    color: #c6f135;
-    margin: 0 0 1 0;
-}}
-
-/* ── Section titre ── */
-#section-label {{
-    color: #3a3a52;
-    text-style: bold;
-    width: 100%;
-    margin-bottom: 1;
-}}
-
-/* ── Boutons principaux ── */
-Button {{
-    background: #111116;
+}
+#header-left {
     color: #eaeaea;
-    border: tall #1f1f2e;
+    width: 1fr;
+    content-align: left middle;
+}
+#header-brand {
+    color: #c6f135;
+    text-style: bold;
+}
+#header-pipe {
+    color: #2e2e44;
+}
+#header-sub {
+    color: #3a3a54;
+}
+#script-count {
+    color: #3a3a54;
+    width: auto;
+    content-align: right middle;
+    border: tall #1f1f30;
+    background: #111118;
+    padding: 0 2;
+}
+
+/* ── Barre d'outils ── */
+#store-toolbar {
+    height: 3;
+    background: #0c0c10;
+    border-bottom: tall #1a1a26;
+    width: 100%;
+}
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    color: #4a4a60;
+    height: 3;
+    width: auto;
+    padding: 0 3;
+    min-width: 18;
+}
+.toolbar-btn:hover {
+    color: #c6f135;
+    background: #111118;
+    border: none;
+}
+.toolbar-btn:focus {
+    border: none;
+    color: #c6f135;
+}
+.toolbar-btn:disabled {
+    color: #222230;
+    background: transparent;
+    border: none;
+}
+#toolbar-spacer {
     width: 1fr;
     height: 3;
-    margin-bottom: 1;
-    text-align: left;
-}}
-Button:hover {{
-    background: #1c1c24;
-    border: tall #2e2e42;
-    color: #ffffff;
-}}
-Button:focus {{
-    border: tall #2e2e42;
-}}
-Button:disabled {{
-    background: #0d0d10;
-    color: #2a2a38;
-    border: tall #151520;
-}}
-
-/* ── Accent (Volt) ── */
-Button.accent {{
-    color: #c6f135;
-    border: tall #2e2e42;
-}}
-Button.accent:hover {{
-    background: #2a3a00;
-    border: tall #c6f135;
-    color: #d8ff55;
-}}
-Button.accent:disabled {{
-    color: #3a4a1a;
-    background: #0d0d10;
-    border: tall #151520;
-}}
-
-/* ── Danger (Quitter) ── */
-Button.danger {{
-    color: #5a5a6e;
-}}
-Button.danger:hover {{
-    background: #1a0a0a;
-    border: tall #f53c3c;
-    color: #f53c3c;
-}}
-
-/* ── Bouton MàJ inline (petit) ── */
-#btn-upd-neytube {{
-    width: 10;
-    color: #5a5a6e;
-    text-align: center;
-}}
-#btn-upd-neytube:hover {{
-    background: #2a3a00;
-    border: tall #c6f135;
-    color: #c6f135;
-}}
-
-/* ── Ligne Ney-Tube (bouton + inline update) ── */
-#row-neytube {{
-    width: 100%;
+}
+.toolbar-divider {
+    width: 1;
     height: 3;
-    margin-bottom: 1;
-}}
+    background: #1a1a26;
+}
 
-/* ── Ligne Co-flix (masquée par défaut) ── */
-#row-coflix {{
-    width: 100%;
+/* ── Barre de recherche ── */
+#search-bar {
     height: 3;
-    margin-bottom: 1;
+    border-bottom: tall #1a1a26;
+    background: #111118;
+    padding: 0 2;
     display: none;
-}}
-#row-coflix.shown {{
+}
+#search-bar.shown {
     display: block;
-}}
+}
+#search-icon {
+    color: #3a3a54;
+    width: 3;
+    content-align: left middle;
+}
+Input {
+    background: transparent;
+    border: none;
+    color: #eaeaea;
+    width: 1fr;
+    padding: 0 1;
+}
+Input:focus {
+    border: none;
+}
+
+/* ── Corps (split gauche/droite) ── */
+#store-body {
+    height: 1fr;
+    width: 100%;
+}
+
+/* ── Liste des scripts (gauche) ── */
+#script-list {
+    width: 2fr;
+    height: 100%;
+    border-right: tall #1a1a26;
+    background: #09090c;
+}
+ListView {
+    background: #09090c;
+    border: none;
+    padding: 0;
+    height: 100%;
+}
+ListView > .--highlight {
+    background: #111118;
+}
+ListView:focus {
+    border: none;
+}
+ListItem {
+    background: #09090c;
+    padding: 0;
+    height: 7;
+    border-bottom: tall #0f0f13;
+}
+ListItem:hover {
+    background: #0f0f13;
+}
+ListItem.--highlight {
+    background: #111118;
+    border-left: outer #c6f135;
+}
+
+/* Carte script dans la liste */
+.card-row {
+    padding: 1 2;
+    height: 7;
+    width: 100%;
+}
+.card-icon-box {
+    width: 5;
+    height: 5;
+    content-align: center middle;
+    background: #1a1a28;
+    color: #c6f135;
+    text-style: bold;
+    border: tall #252538;
+}
+.card-info {
+    width: 1fr;
+    height: 5;
+    padding: 0 2;
+}
+.card-name {
+    color: #e0e0e0;
+    text-style: bold;
+    width: 100%;
+}
+.card-type {
+    color: #3a3a54;
+    width: 100%;
+}
+.card-chip {
+    width: auto;
+    content-align: right middle;
+    color: #3a3a54;
+    height: 5;
+    padding: 0 1;
+}
+
+/* Couleurs des badges */
+.chip-ok      { color: #4cd97b; }
+.chip-update  { color: #f5a623; }
+.chip-missing { color: #555570; }
+.chip-unknown { color: #3a3a54; }
+
+/* ── Panneau de détail (droite) ── */
+#detail-panel {
+    width: 3fr;
+    height: 100%;
+    background: #0f0f13;
+}
+#detail-tabs {
+    height: 3;
+    border-bottom: tall #1a1a26;
+    background: #0c0c10;
+    padding: 0 2;
+}
+.detail-tab {
+    width: auto;
+    content-align: left middle;
+    color: #3a3a54;
+    padding: 0 2;
+    text-style: bold;
+    height: 3;
+}
+.detail-tab.tab-active {
+    color: #eaeaea;
+}
+#detail-content {
+    padding: 3 4;
+    height: 1fr;
+    width: 100%;
+}
+#detail-empty {
+    color: #252538;
+    content-align: center middle;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+#detail-icon-box {
+    width: 9;
+    height: 5;
+    content-align: center middle;
+    background: #1a1a28;
+    color: #c6f135;
+    text-style: bold;
+    border: tall #252538;
+    margin-bottom: 2;
+    display: none;
+}
+#detail-name {
+    color: #eaeaea;
+    text-style: bold;
+    width: 100%;
+    margin-bottom: 0;
+    display: none;
+}
+#detail-type {
+    color: #3a3a54;
+    width: 100%;
+    margin-bottom: 2;
+    display: none;
+}
+#detail-desc {
+    color: #4a4a62;
+    width: 100%;
+    margin-bottom: 2;
+    display: none;
+}
+#detail-status {
+    color: #3a3a54;
+    width: 100%;
+    margin-bottom: 3;
+    display: none;
+}
+#btn-detail-action {
+    width: 100%;
+    height: 3;
+    background: #1a1a28;
+    color: #eaeaea;
+    border: tall #2e2e46;
+    text-align: center;
+    display: none;
+}
+#btn-detail-action:hover {
+    background: #263800;
+    border: tall #c6f135;
+    color: #c6f135;
+}
+#btn-detail-action:disabled {
+    background: #0c0c10;
+    color: #252538;
+    border: tall #141420;
+}
 
 /* ── Barre de progression ── */
-#progress {{
-    width: 100%;
-    margin-bottom: 1;
-    display: none;
-}}
-#progress.shown {{
-    display: block;
-}}
-#progress > .bar--bar {{
-    color: #c6f135;
-    background: #1f1f2e;
-}}
-#progress > .bar--complete {{
-    color: #c6f135;
-}}
-#progress > .bar--indeterminate {{
-    color: #c6f135;
-}}
-
-/* ── Pied de page (log) ── */
-#footer {{
+#progress {
     width: 100%;
     height: 1;
-    margin-top: 0;
-}}
-#log-dot {{
+    display: none;
+}
+#progress.shown {
+    display: block;
+}
+ProgressBar > .bar--bar {
+    color: #c6f135;
+    background: #1f1f30;
+}
+ProgressBar > .bar--complete {
+    color: #c6f135;
+}
+ProgressBar > .bar--indeterminate {
+    color: #c6f135;
+}
+
+/* ── Pied de page (log) ── */
+#footer {
+    height: 1;
+    background: #0c0c10;
+    border-top: tall #1a1a26;
+    padding: 0 2;
+    width: 100%;
+}
+#log-dot {
     width: 2;
-    color: #5a5a6e;
+    color: #4a4a60;
     content-align: left middle;
-}}
-#log-msg {{
+}
+#log-msg {
     width: 1fr;
-    color: #5a5a6e;
+    color: #4a4a60;
     content-align: left middle;
-}}
-#log-ver {{
+}
+#log-ver {
     width: auto;
-    color: #2e2e42;
+    color: #252538;
     content-align: right middle;
-}}
+}
 """
 
 
-class NeyMenuApp(App):
-    """Application Textual NEY-MENU — PC et Termux/Android."""
+# ── Carte de script ───────────────────────────────────────────────────────────
 
-    TITLE   = "NEY-MENU"
-    CSS     = _CSS
-    BINDINGS = [("ctrl+c", "quit_app", "Quitter")]
+class ScriptCard(ListItem):
+    """Élément de la liste des scripts dans le store."""
+
+    def __init__(self, script: dict) -> None:
+        super().__init__()
+        self._script = script
+
+    def compose(self) -> ComposeResult:
+        s = self._script
+        with Horizontal(classes="card-row"):
+            yield Static(s["icon"], classes="card-icon-box")
+            with Vertical(classes="card-info"):
+                yield Static(s["name"], classes="card-name")
+                yield Static(s["type"], classes="card-type")
+            yield Static("  …", id=f"chip-{s['id']}", classes="card-chip")
+
+
+# ── Application principale ────────────────────────────────────────────────────
+
+class NeyMenuApp(App):
+    """NEY-MENU — Interface store de la Koyney Suite."""
+
+    TITLE    = "NEY-STORE"
+    CSS      = _CSS
+    BINDINGS = [
+        ("ctrl+c", "quit_app",       "Quitter"),
+        ("ctrl+f", "toggle_search",  "Rechercher"),
+    ]
 
     def __init__(self) -> None:
         super().__init__()
-        self._coflix_present = False
+        self._selected_id: str | None = None
+        self._statuses: dict[str, tuple[str, str]] = {}  # id → (badge, key)
 
-    # ── Construction de l'interface ───────────────────────────────────────────
+    # ── Helpers ──────────────────────────────────────────────────────────────
+
+    def _script_by_id(self, sid: str) -> dict | None:
+        for s in SCRIPTS:
+            if s["id"] == sid:
+                return s
+        return None
+
+    def _installed_count(self) -> int:
+        py = _py_dir()
+        return sum(1 for s in SCRIPTS if os.path.isfile(os.path.join(py, s["file"])))
+
+    # ── Compose ──────────────────────────────────────────────────────────────
+
     def compose(self) -> ComposeResult:
-        with Container(id="main"):
+        with Vertical(id="main"):
 
-            # En-tête
-            with Container(id="header"):
+            # ── En-tête ──
+            with Horizontal(id="store-header"):
                 yield Static(
-                    "NEY  ─  MENU",
-                    id="brand-title",
+                    f"▲  [bold #c6f135]NEY-STORE[/]  [#2e2e44]│[/]  [#3a3a54]gestionnaire de scripts[/]",
+                    id="header-left",
+                    markup=True,
                 )
-                yield Static("K O Y N E Y   S U I T E", id="brand-subtitle")
-                yield Static(f"v{VERSION}", id="brand-version")
+                yield Static(f"0 / {len(SCRIPTS)} scripts", id="script-count")
 
-            # Statuts scripts
-            with Horizontal(id="status-bar"):
-                yield Static("SCRIPTS", id="scripts-label")
-                yield Static("NEY-TUBE   …", id="chip-neytube")
-                yield Static("CO-FLIX   …", id="chip-coflix")
+            # ── Barre d'outils ──
+            with Horizontal(id="store-toolbar"):
+                yield Button("⟳  Actualiser", id="btn-refresh",  classes="toolbar-btn")
+                yield Static("",              classes="toolbar-divider")
+                yield Button("↓  Installer",  id="btn-install",  classes="toolbar-btn")
+                yield Static("",              id="toolbar-spacer")
+                yield Button("✕  Quitter",    id="btn-quit",     classes="toolbar-btn")
 
-            # Séparateur Volt
-            yield Rule()
+            # ── Barre de recherche (Ctrl+F) ──
+            with Horizontal(id="search-bar"):
+                yield Static("⊕ ", id="search-icon")
+                yield Input(placeholder="Rechercher un script…", id="search-input")
+                yield Button("✕", id="btn-search-close", classes="toolbar-btn")
 
-            # Titre section
-            yield Static("QUE VOULEZ-VOUS FAIRE ?", id="section-label")
+            # ── Corps principal ──
+            with Horizontal(id="store-body"):
 
-            # Bouton Co-flix (caché si absent)
-            with Container(id="row-coflix"):
-                yield Button(
-                    "🎬   Films / Séries  ·  CO-FLIX   ›",
-                    id="btn-coflix",
-                    classes="accent",
-                )
+                # Panneau gauche — liste des scripts
+                with Container(id="script-list"):
+                    yield ListView(
+                        *[ScriptCard(s) for s in SCRIPTS],
+                        id="script-listview",
+                    )
 
-            # Bouton Ney-Tube + MàJ inline
-            with Horizontal(id="row-neytube"):
-                yield Button(
-                    "▶   YouTube  ·  NEY-TUBE   ›",
-                    id="btn-neytube",
-                    classes="accent",
-                )
-                yield Button("↓  MàJ", id="btn-upd-neytube")
+                # Panneau droit — détail
+                with Vertical(id="detail-panel"):
+                    with Horizontal(id="detail-tabs"):
+                        yield Static("DÉTAIL",    id="tab-detail", classes="detail-tab tab-active")
+                        yield Static("NEY-STORE", id="tab-store",  classes="detail-tab")
 
-            # Bouton Quitter
-            yield Button("✕   Quitter", id="btn-quit", classes="danger")
+                    with Vertical(id="detail-content"):
+                        yield Static(
+                            "←  Sélectionnez un script",
+                            id="detail-empty",
+                        )
+                        yield Static("",  id="detail-icon-box")
+                        yield Static("",  id="detail-name")
+                        yield Static("",  id="detail-type")
+                        yield Static("",  id="detail-desc")
+                        yield Static("",  id="detail-status")
+                        yield Button("",  id="btn-detail-action", disabled=True)
 
-            # Barre de progression (masquée par défaut)
+            # ── Barre de progression ──
             yield ProgressBar(total=100, show_eta=False, id="progress")
 
-            # Log bar
+            # ── Pied de page (log) ──
             with Horizontal(id="footer"):
-                yield Static("●", id="log-dot")
-                yield Static("  Initialisation…", id="log-msg")
-                yield Static(f"v{VERSION}", id="log-ver")
+                yield Static("●",                  id="log-dot")
+                yield Static("  Initialisation…",  id="log-msg")
+                yield Static(f"v{VERSION}",         id="log-ver")
 
     # ── Démarrage ─────────────────────────────────────────────────────────────
+
     def on_mount(self) -> None:
         self._set_buttons_enabled(False)
         self._worker_self_update()
 
+    # ── Sélection d'un script ─────────────────────────────────────────────────
+
+    def _select_script(self, sid: str) -> None:
+        """Affiche les détails du script sélectionné dans le panneau droit."""
+        self._selected_id = sid
+        s = self._script_by_id(sid)
+        if s is None:
+            return
+
+        badge, key = self._statuses.get(sid, ("…", "unknown"))
+
+        # Cacher le placeholder
+        self.query_one("#detail-empty").styles.display = "none"
+
+        # Icône
+        icon_w = self.query_one("#detail-icon-box")
+        icon_w.update(s["icon"])
+        icon_w.styles.display = "block"
+
+        # Nom
+        name_w = self.query_one("#detail-name")
+        name_w.update(s["name"])
+        name_w.styles.display = "block"
+
+        # Type
+        type_w = self.query_one("#detail-type")
+        type_w.update(s["type"])
+        type_w.styles.display = "block"
+
+        # Description
+        desc_w = self.query_one("#detail-desc")
+        desc_w.update(s["desc"])
+        desc_w.styles.display = "block"
+
+        # Statut
+        status_w = self.query_one("#detail-status")
+        status_w.update(badge)
+        status_w.styles.display = "block"
+
+        # Bouton action
+        btn = self.query_one("#btn-detail-action", Button)
+        btn.styles.display = "block"
+        self._refresh_detail_button(s, key)
+
+    def _refresh_detail_button(self, s: dict, key: str) -> None:
+        """Met à jour le label et l'état du bouton d'action selon le statut."""
+        btn = self.query_one("#btn-detail-action", Button)
+        if key == "ok":
+            btn.label   = "▶  LANCER"
+            btn.disabled = False
+        elif s["url"] and key in ("missing", "update", "unknown"):
+            btn.label   = "↓  INSTALLER / MÀJ"
+            btn.disabled = False
+        else:
+            btn.label   = "⊘  INDISPONIBLE"
+            btn.disabled = True
+
+    # ── Événements ────────────────────────────────────────────────────────────
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        item = event.item
+        if isinstance(item, ScriptCard):
+            self._select_script(item._script["id"])
+
     # ── Helpers UI ────────────────────────────────────────────────────────────
+
     def _log(self, msg: str, level: str = "info") -> None:
-        """Met à jour la barre de log (thread principal uniquement)."""
         colors = {
-            "info": "#5a5a6e",
+            "info": "#4a4a60",
             "ok":   "#4cd97b",
             "warn": "#f5a623",
             "err":  "#f53c3c",
         }
-        color = colors.get(level, "#5a5a6e")
-        self.query_one("#log-dot", Static).styles.color = color
-        msg_w = self.query_one("#log-msg", Static)
+        color = colors.get(level, "#4a4a60")
+        self.query_one("#log-dot",  Static).styles.color = color
+        msg_w = self.query_one("#log-msg",  Static)
         msg_w.styles.color = color
         msg_w.update(f"  {msg}")
 
     def _set_buttons_enabled(self, enabled: bool) -> None:
-        for btn_id in ("btn-coflix", "btn-neytube", "btn-upd-neytube", "btn-quit"):
+        for btn_id in ("btn-refresh", "btn-install", "btn-detail-action"):
             try:
                 self.query_one(f"#{btn_id}", Button).disabled = not enabled
             except Exception:
                 pass
 
     def _update_chip(self, chip_id: str, badge: str, key: str) -> None:
-        chip = self.query_one(f"#{chip_id}", Static)
-        chip.remove_class("chip-ok", "chip-update", "chip-missing", "chip-unknown")
-        chip.add_class(f"chip-{key}")
-        chip.update(f"{badge}")
+        """Met à jour le badge dans la liste et, si sélectionné, le panneau détail."""
+        try:
+            chip = self.query_one(f"#{chip_id}", Static)
+            chip.remove_class("chip-ok", "chip-update", "chip-missing", "chip-unknown")
+            chip.add_class(f"chip-{key}")
+            chip.update(f"  {badge}")
+        except Exception:
+            pass
 
-    def _show_coflix(self, visible: bool) -> None:
-        row  = self.query_one("#row-coflix")
-        chip = self.query_one("#chip-coflix", Static)
-        if visible:
-            row.add_class("shown")
-            chip.styles.display = "block"
-        else:
-            row.remove_class("shown")
-            chip.styles.display = "none"
+        script_id = chip_id.replace("chip-", "")
+        self._statuses[script_id] = (badge, key)
+
+        # Rafraîchir le panneau détail si ce script est sélectionné
+        if script_id == self._selected_id:
+            s = self._script_by_id(script_id)
+            if s:
+                try:
+                    self.query_one("#detail-status", Static).update(badge)
+                    self._refresh_detail_button(s, key)
+                except Exception:
+                    pass
+
+    def _update_script_count(self) -> None:
+        installed = self._installed_count()
+        total     = len(SCRIPTS)
+        self.query_one("#script-count", Static).update(
+            f"{installed} / {total} script{'s' if total > 1 else ''}"
+        )
 
     def _show_progress(self, visible: bool) -> None:
         pb = self.query_one("#progress")
@@ -571,10 +816,29 @@ class NeyMenuApp(App):
             pb.remove_class("shown")
 
     def _set_progress(self, pct: int) -> None:
-        pb = self.query_one(ProgressBar)
-        pb.progress = float(pct)
+        self.query_one(ProgressBar).progress = float(pct)
 
-    # ── Workers (threads en arrière-plan) ────────────────────────────────────
+    # ── Action : toggle recherche ─────────────────────────────────────────────
+
+    def action_toggle_search(self) -> None:
+        bar = self.query_one("#search-bar")
+        if "shown" in bar.classes:
+            bar.remove_class("shown")
+        else:
+            bar.add_class("shown")
+            try:
+                self.query_one("#search-input", Input).focus()
+            except Exception:
+                pass
+
+    @on(Input.Changed, "#search-input")
+    def _on_search_changed(self, event: Input.Changed) -> None:
+        query = event.value.strip().lower()
+        for card in self.query(ScriptCard):
+            name = card._script["name"].lower()
+            card.styles.display = "block" if (not query or query in name) else "none"
+
+    # ── Workers ───────────────────────────────────────────────────────────────
 
     @work(thread=True, name="self-update")
     def _worker_self_update(self) -> None:
@@ -597,9 +861,7 @@ class NeyMenuApp(App):
                     raise ValueError(f"HTTP {resp.status}")
                 remote = resp.read()
         except Exception as exc:
-            self.call_from_thread(
-                self._log, f"Réseau indisponible — {exc}", "warn"
-            )
+            self.call_from_thread(self._log, f"Réseau indisponible — {exc}", "warn")
             self.call_from_thread(self._start_check_statuses)
             return
 
@@ -619,9 +881,7 @@ class NeyMenuApp(App):
             self.call_from_thread(self._start_check_statuses)
             return
 
-        self.call_from_thread(
-            self._log, "Nouvelle version détectée — mise à jour…", "info"
-        )
+        self.call_from_thread(self._log, "Nouvelle version détectée — mise à jour…", "info")
         try:
             parent = os.path.dirname(current_path)
             if parent:
@@ -633,115 +893,120 @@ class NeyMenuApp(App):
             self.call_from_thread(self._start_check_statuses)
             return
 
-        # Relancer avec la nouvelle version
-        self.call_from_thread(
-            self._log, "Relancement avec la nouvelle version…", "ok"
-        )
+        self.call_from_thread(self._log, "Relancement avec la nouvelle version…", "ok")
         time.sleep(1.2)
         subprocess.Popen([sys.executable, current_path] + sys.argv[1:])
         self.call_from_thread(self.exit)
 
     def _start_check_statuses(self) -> None:
-        """Démarre le worker de vérification des statuts (thread principal)."""
         self._worker_check_statuses()
 
     @work(thread=True, name="check-statuses")
     def _worker_check_statuses(self) -> None:
         """Vérifie la présence et la version de chaque script."""
         self.call_from_thread(self._log, "Vérification des statuts…", "info")
-
         py = _py_dir()
 
-        # Renommages éventuels
+        # Renommages rétro-compatibles
         for alias in ("cotube.pyw", "youtube_downloader.py"):
             _rename_if_needed(py, alias, COTUBE_FILE)
         for alias in ("coflix.py", "get.php"):
             _rename_if_needed(py, alias, COFLIX_FILE)
 
-        # Ney-Tube
-        nt_label, nt_badge, nt_key = _compute_one_status(
-            "NEY-TUBE", os.path.join(py, COTUBE_FILE), URL_COTUBE
-        )
-        self.call_from_thread(self._update_chip, "chip-neytube", nt_badge, nt_key)
+        for s in SCRIPTS:
+            path = os.path.join(py, s["file"])
+            if s["url"]:
+                _, badge, key = _compute_one_status(s["name"], path, s["url"])
+            else:
+                # Pas d'URL : local only
+                if os.path.isfile(path):
+                    badge, key = "✓ Présent", "ok"
+                else:
+                    badge, key = "⊙ Indisponible", "missing"
+            self.call_from_thread(self._update_chip, f"chip-{s['id']}", badge, key)
 
-        # Co-flix
-        coflix_path    = os.path.join(py, COFLIX_FILE)
-        coflix_present = os.path.isfile(coflix_path)
-        if coflix_present:
-            _, cf_badge, cf_key = _compute_one_status("CO-FLIX", coflix_path, None)
-            self.call_from_thread(self._update_chip, "chip-coflix", cf_badge, cf_key)
-        self.call_from_thread(self._show_coflix, coflix_present)
-        self._coflix_present = coflix_present
-
+        self.call_from_thread(self._update_script_count)
         self.call_from_thread(self._set_buttons_enabled, True)
         self.call_from_thread(self._log, "Prêt.", "ok")
 
-    @work(thread=True, name="update-scripts")
-    def _worker_update_scripts(self) -> None:
-        """Télécharge la dernière version de Ney-Tube."""
+    @work(thread=True, name="install-script")
+    def _worker_install_script(self, sid: str) -> None:
+        """Télécharge et installe le script demandé."""
+        s = self._script_by_id(sid)
+        if s is None or not s["url"]:
+            return
+
         self.call_from_thread(self._set_buttons_enabled, False)
         self.call_from_thread(self._show_progress, True)
         self.call_from_thread(self._set_progress, 0)
 
-        py   = _py_dir()
-        dest = os.path.join(py, COTUBE_FILE)
-        self.call_from_thread(self._log, "Téléchargement de Ney-Tube…", "info")
+        dest = os.path.join(_py_dir(), s["file"])
+        self.call_from_thread(self._log, f"Téléchargement de {s['name']}…", "info")
 
         ok = _download_file(
-            URL_COTUBE,
+            s["url"],
             dest,
-            "Ney-Tube",
+            s["name"],
             progress_cb=lambda pct: self.call_from_thread(self._set_progress, pct),
         )
 
         self.call_from_thread(self._show_progress, False)
         if ok:
-            self.call_from_thread(
-                self._log, "Ney-Tube mis à jour avec succès.", "ok"
-            )
+            self.call_from_thread(self._log, f"{s['name']} installé avec succès.", "ok")
         else:
-            self.call_from_thread(
-                self._log, "Erreur lors de la mise à jour.", "warn"
-            )
+            self.call_from_thread(self._log, "Erreur lors de l'installation.", "warn")
+
         self.call_from_thread(self._start_check_statuses)
 
     # ── Actions boutons ───────────────────────────────────────────────────────
 
-    @on(Button.Pressed, "#btn-coflix")
-    def _action_coflix(self) -> None:
-        path = os.path.join(_py_dir(), COFLIX_FILE)
-        if not os.path.isfile(path):
-            self._log("Co-flix introuvable.", "warn")
-            return
-        self._log("Lancement de Co-flix…", "info")
-        if _TERMUX:
-            # Suspend Textual, exécute le script inline, puis reprend
-            with self.suspend():
-                launch_coflix()
-        else:
-            _open_in_terminal(path)
-
-    @on(Button.Pressed, "#btn-neytube")
-    def _action_neytube(self) -> None:
-        path = os.path.join(_py_dir(), COTUBE_FILE)
-        if not os.path.isfile(path):
-            self._log("Ney-Tube introuvable — faites une mise à jour.", "warn")
-            return
-        self._log("Lancement de Ney-Tube…", "info")
-        if _TERMUX:
-            with self.suspend():
-                launch_cotube()
-        else:
-            _open_in_terminal(path)
-
-    @on(Button.Pressed, "#btn-upd-neytube")
-    def _action_update(self) -> None:
-        self._worker_update_scripts()
+    @on(Button.Pressed, "#btn-refresh")
+    def _action_refresh(self) -> None:
+        self._set_buttons_enabled(False)
+        self._start_check_statuses()
 
     @on(Button.Pressed, "#btn-quit")
-    def _action_quit(self) -> None:
+    def _action_quit_btn(self) -> None:
         _cleanup_pycache()
         self.exit()
+
+    @on(Button.Pressed, "#btn-search-close")
+    def _action_close_search(self) -> None:
+        self.query_one("#search-bar").remove_class("shown")
+
+    @on(Button.Pressed, "#btn-install")
+    @on(Button.Pressed, "#btn-detail-action")
+    def _action_store_action(self, event: Button.Pressed) -> None:
+        """Installer ou lancer le script actuellement sélectionné."""
+        sid = self._selected_id
+        if sid is None:
+            self._log("Aucun script sélectionné.", "warn")
+            return
+
+        s = self._script_by_id(sid)
+        if s is None:
+            return
+
+        _, key = self._statuses.get(sid, ("", "unknown"))
+
+        if key == "ok":
+            # Lancer le script
+            path = os.path.join(_py_dir(), s["file"])
+            if not os.path.isfile(path):
+                self._log(f"{s['name']} introuvable.", "warn")
+                return
+            self._log(f"Lancement de {s['name']}…", "info")
+            if _TERMUX:
+                launch_fn = launch_cotube if sid == "neytube" else launch_coflix
+                with self.suspend():
+                    launch_fn()
+            else:
+                _open_in_terminal(path)
+        elif s["url"]:
+            # Installer / mettre à jour
+            self._worker_install_script(sid)
+        else:
+            self._log(f"{s['name']} ne peut pas être installé automatiquement.", "warn")
 
     def action_quit_app(self) -> None:
         _cleanup_pycache()
@@ -753,7 +1018,6 @@ class NeyMenuApp(App):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def main() -> None:
-    """Point d'entrée principal de NEY-MENU."""
     app = NeyMenuApp()
     app.run()
 
