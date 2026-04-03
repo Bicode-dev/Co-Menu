@@ -493,6 +493,18 @@ ListItem.--highlight {
     display: none;
 }
 
+/* ── Conteneur fixe des boutons d'action ── */
+#detail-actions {
+    height: auto;
+    padding: 1 4 2 4;
+    background: #0f0f13;
+    border-top: tall #1a1a26;
+    display: none;
+}
+#detail-actions.shown {
+    display: block;
+}
+
 /* ── Boutons d'action du panneau détail ── */
 #btn-detail-download,
 #btn-detail-launch {
@@ -503,7 +515,7 @@ ListItem.--highlight {
     border: tall #2e2e46;
     text-align: center;
     display: none;
-    margin-top: 1;
+    margin-bottom: 1;
 }
 #btn-detail-download:hover,
 #btn-detail-launch:hover {
@@ -665,6 +677,8 @@ class NeyMenuApp(App):
                         yield Static("",  id="detail-type")
                         yield Static("",  id="detail-desc")
                         yield Static("",  id="detail-status")
+
+                    with Vertical(id="detail-actions"):
                         yield Button("↓  TÉLÉCHARGER / MÀJ", id="btn-detail-download", disabled=True)
                         yield Button("▶  LANCER",             id="btn-detail-launch",   disabled=True)
 
@@ -729,8 +743,10 @@ class NeyMenuApp(App):
         """Affiche et met à jour l'état des boutons Télécharger et Lancer."""
         dl  = self.query_one("#btn-detail-download", Button)
         run = self.query_one("#btn-detail-launch",   Button)
+        actions = self.query_one("#detail-actions")
         dl.styles.display  = "block"
         run.styles.display = "block"
+        actions.add_class("shown")
         # Télécharger : disponible si une URL existe
         dl.disabled  = not bool(s.get("url"))
         # Lancer : disponible uniquement si le fichier est présent
