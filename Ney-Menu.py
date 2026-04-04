@@ -281,7 +281,6 @@ Screen {
 }
 .toolbar-btn:hover {
     color: #c6f135;
-    background: #111118;
     border: none;
 }
 .toolbar-btn:focus   { border: none; color: #c6f135; background: transparent; }
