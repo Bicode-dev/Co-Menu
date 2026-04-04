@@ -53,9 +53,9 @@ SCRIPTS: list[dict] = [
     {
         "id":   "neytube",
         "name": "Ney-Tube",
-        "type": "script python",
+        "type": "Youtube",
         "icon": "▶",
-        "desc": "Téléchargeur de vidéos YouTube et plateformes supportées.",
+        "desc": "Téléchargeur de vidéos Youtube",
         "file": COTUBE_FILE,
         "url":  URL_COTUBE,
     },
@@ -185,9 +185,7 @@ def _compute_one_status(
         return (label, "? Inconnu", "unknown")
     if abs(remote_size - local_size) <= 1:
         return (label, "✓ À jour", "ok")
-    delta = remote_size - local_size
-    sign  = "+" if delta > 0 else ""
-    return (label, f"↑ MàJ ({sign}{delta}o)", "update")
+    return (label, "↑ MàJ disponible", "update")
 
 
 def _rename_if_needed(folder: str, src_name: str, dst_name: str) -> None:
@@ -384,19 +382,10 @@ ListItem.--highlight {
     height: 7;
     width: 100%;
 }
-.card-icon-box {
-    width: 5;
-    height: 5;
-    content-align: center middle;
-    background: #1a1a28;
-    color: #c6f135;
-    text-style: bold;
-    border: tall #252538;
-}
 .card-info {
     width: 1fr;
     height: 5;
-    padding: 0 2;
+    padding: 0 1;
 }
 .card-name {
     color: #e0e0e0;
@@ -456,17 +445,6 @@ ListItem.--highlight {
     height: 100%;
     text-align: center;
 }
-#detail-icon-box {
-    width: 9;
-    height: 5;
-    content-align: center middle;
-    background: #1a1a28;
-    color: #c6f135;
-    text-style: bold;
-    border: tall #252538;
-    margin-bottom: 2;
-    display: none;
-}
 #detail-name {
     color: #eaeaea;
     text-style: bold;
@@ -481,7 +459,7 @@ ListItem.--highlight {
     display: none;
 }
 #detail-desc {
-    color: #4a4a62;
+    color: #9a9ab8;
     width: 100%;
     margin-bottom: 2;
     display: none;
@@ -494,35 +472,40 @@ ListItem.--highlight {
 }
 
 /* ── Conteneur fixe des boutons d'action ── */
-#detail-tabs-spacer {
-    width: 1fr;
-    height: 3;
+#detail-actions {
+    height: auto;
+    padding: 1 4 2 4;
+    background: #0f0f13;
+    border-top: tall #1a1a26;
+    display: none;
+}
+#detail-actions.shown {
+    display: block;
 }
 
 /* ── Boutons d'action du panneau détail ── */
 #btn-detail-download,
 #btn-detail-launch {
+    width: 100%;
     height: 3;
-    width: auto;
-    min-width: 14;
     background: #1a1a28;
-    color: #4a4a62;
-    border: none;
+    color: #eaeaea;
+    border: tall #2e2e46;
     text-align: center;
     display: none;
-    padding: 0 2;
+    margin-bottom: 1;
 }
 #btn-detail-download:hover,
 #btn-detail-launch:hover {
     background: #263800;
-    border: none;
+    border: tall #c6f135;
     color: #c6f135;
 }
 #btn-detail-download:disabled,
 #btn-detail-launch:disabled {
-    background: transparent;
+    background: #0c0c10;
     color: #252538;
-    border: none;
+    border: tall #141420;
 }
 
 /* ── Barre de progression ── */
@@ -583,7 +566,6 @@ class ScriptCard(ListItem):
     def compose(self) -> ComposeResult:
         s = self._script
         with Horizontal(classes="card-row"):
-            yield Static(s["icon"], classes="card-icon-box")
             with Vertical(classes="card-info"):
                 yield Static(s["name"], classes="card-name")
                 yield Static(s["type"], classes="card-type")
@@ -627,7 +609,7 @@ class NeyMenuApp(App):
             # ── En-tête ──
             with Horizontal(id="store-header"):
                 yield Static(
-                    f"▲  [bold #c6f135]NEY-MENU[/]  [#2e2e44]│[/]  [#3a3a54]gestionnaire de scripts[/]",
+                    f"▲  [bold #c6f135]NEY-MENU[/]",
                     id="header-left",
                     markup=True,
                 )
@@ -661,20 +643,20 @@ class NeyMenuApp(App):
                 with Vertical(id="detail-panel"):
                     with Horizontal(id="detail-tabs"):
                         yield Static("DÉTAIL", id="tab-detail", classes="detail-tab tab-active")
-                        yield Static("", id="detail-tabs-spacer")
-                        yield Button("↓ MÀJ", id="btn-detail-download", disabled=True)
-                        yield Button("▶ LANCER", id="btn-detail-launch", disabled=True)
 
                     with Vertical(id="detail-content"):
                         yield Static(
                             "←  Sélectionnez un script",
                             id="detail-empty",
                         )
-                        yield Static("",  id="detail-icon-box")
                         yield Static("",  id="detail-name")
                         yield Static("",  id="detail-type")
                         yield Static("",  id="detail-desc")
                         yield Static("",  id="detail-status")
+
+                    with Vertical(id="detail-actions"):
+                        yield Button("↓  TÉLÉCHARGER / MÀJ", id="btn-detail-download", disabled=True)
+                        yield Button("▶  LANCER",             id="btn-detail-launch",   disabled=True)
 
             # ── Barre de progression ──
             yield ProgressBar(total=100, show_eta=False, id="progress")
@@ -690,6 +672,7 @@ class NeyMenuApp(App):
     def on_mount(self) -> None:
         self._set_buttons_enabled(False)
         self._worker_self_update()
+        
 
     # ── Sélection d'un script ─────────────────────────────────────────────────
 
@@ -704,11 +687,6 @@ class NeyMenuApp(App):
 
         # Cacher le placeholder
         self.query_one("#detail-empty").styles.display = "none"
-
-        # Icône
-        icon_w = self.query_one("#detail-icon-box")
-        icon_w.update(s["icon"])
-        icon_w.styles.display = "block"
 
         # Nom
         name_w = self.query_one("#detail-name")
@@ -725,24 +703,38 @@ class NeyMenuApp(App):
         desc_w.update(s["desc"])
         desc_w.styles.display = "block"
 
-        # Statut
-        status_w = self.query_one("#detail-status")
-        status_w.update(badge)
-        status_w.styles.display = "block"
+        # Statut masqué dans le détail (info déjà visible via le badge dans la liste)
+        self.query_one("#detail-status").styles.display = "none"
 
         # Boutons télécharger / lancer
         self._refresh_detail_buttons(s, key)
 
     def _refresh_detail_buttons(self, s: dict, key: str) -> None:
-        """Affiche et met à jour l'état des boutons Télécharger et Lancer."""
+        """Affiche uniquement le bouton pertinent selon le statut du script."""
         dl  = self.query_one("#btn-detail-download", Button)
         run = self.query_one("#btn-detail-launch",   Button)
-        dl.styles.display  = "block"
-        run.styles.display = "block"
-        # Télécharger : disponible si une URL existe
-        dl.disabled  = not bool(s.get("url"))
-        # Lancer : disponible uniquement si le fichier est présent
-        run.disabled = key not in ("ok", "update")
+        actions = self.query_one("#detail-actions")
+        actions.add_class("shown")
+
+        if key == "ok":
+            # Script à jour : on peut lancer, inutile de retélécharger
+            dl.styles.display  = "none"
+            run.styles.display = "block"
+            run.disabled = False
+        elif key in ("missing", "update"):
+            # Script absent ou obsolète : proposer le téléchargement uniquement
+            dl.styles.display  = "block"
+            dl.disabled        = not bool(s.get("url"))
+            dl.label           = "↓  Installer" if key == "missing" else "↑  Mettre à Jour"
+            run.styles.display = "none"
+            run.disabled = True
+        else:
+            # Statut inconnu : afficher télécharger, masquer lancer
+            dl.styles.display  = "block"
+            dl.disabled        = not bool(s.get("url"))
+            dl.label           = "↓  Installer"
+            run.styles.display = "none"
+            run.disabled = True
 
     # ── Événements ────────────────────────────────────────────────────────────
 
