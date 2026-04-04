@@ -343,17 +343,30 @@ ListItem:hover        { background: #0f0f13; }
 ListItem.--highlight  { background: #111118; border-left: outer #c6f135; }
 
 /* Carte script dans la liste */
-.card-row  { padding: 1 2; height: 5; width: 100%; }
+.card-row  { padding: 1 2; height: 5; width: 1fr; }
+.card-bar  { width: 1; height: 5; }
 .card-info { width: 1fr; height: 3; padding: 0 1; }
 .card-name { color: #e0e0e0; text-style: bold; width: 100%; }
 .card-type { color: #3a3a54; width: 100%; }
 .card-chip { width: auto; content-align: right middle; color: #3a3a54; height: 5; padding: 0 1; }
+
+/* Couleurs de la barre latérale */
+.card-bar-ok      { background: #4cd97b; }
+.card-bar-update  { background: #f5a623; }
+.card-bar-missing { background: #2e2e44; }
+.card-bar-unknown { background: #1a1a26; }
 
 /* Couleurs des badges */
 .chip-ok      { color: #4cd97b; }
 .chip-update  { color: #f5a623; }
 .chip-missing { color: #555570; }
 .chip-unknown { color: #3a3a54; }
+
+/* Couleurs du nom selon l'état de téléchargement */
+.card-name-ok      { color: #4cd97b; }
+.card-name-update  { color: #f5a623; }
+.card-name-missing { color: #e0e0e0; }
+.card-name-unknown { color: #e0e0e0; }
 
 /* ── Panneau de détail (droite) ── */
 #detail-panel  { width: 3fr; height: 100%; background: #0f0f13; }
@@ -470,11 +483,13 @@ class ScriptCard(ListItem):
 
     def compose(self) -> ComposeResult:
         s = self._script
-        with Horizontal(classes="card-row"):
-            with Vertical(classes="card-info"):
-                yield Static(s["name"], classes="card-name")
-                yield Static(s["type"], classes="card-type")
-            yield Static("  …", id=f"chip-{s['id']}", classes="card-chip")
+        with Horizontal():
+            yield Static("", id=f"bar-{s['id']}", classes="card-bar card-bar-unknown")
+            with Horizontal(classes="card-row"):
+                with Vertical(classes="card-info"):
+                    yield Static(s["name"], id=f"name-{s['id']}", classes="card-name")
+                    yield Static(s["type"], classes="card-type")
+                yield Static("  …", id=f"chip-{s['id']}", classes="card-chip")
 
 
 # ── Application principale ────────────────────────────────────────────────────
@@ -573,6 +588,7 @@ class NeyMenuApp(App):
         except Exception:
             pass
         self._worker_self_update()
+        
         
 
     # ── Sélection d'un script ─────────────────────────────────────────────────
@@ -678,6 +694,28 @@ class NeyMenuApp(App):
 
         script_id = chip_id.replace("chip-", "")
         self._statuses[script_id] = (badge, key)
+
+        # Coloriser aussi le nom du script selon l'état
+        try:
+            name_w = self.query_one(f"#name-{script_id}", Static)
+            name_w.remove_class(
+                "card-name-ok", "card-name-update",
+                "card-name-missing", "card-name-unknown",
+            )
+            name_w.add_class(f"card-name-{key}")
+        except Exception:
+            pass
+
+        # Coloriser la barre latérale selon l'état
+        try:
+            bar_w = self.query_one(f"#bar-{script_id}", Static)
+            bar_w.remove_class(
+                "card-bar-ok", "card-bar-update",
+                "card-bar-missing", "card-bar-unknown",
+            )
+            bar_w.add_class(f"card-bar-{key}")
+        except Exception:
+            pass
 
         # Rafraîchir le panneau détail si ce script est sélectionné
         if script_id == self._selected_id:
