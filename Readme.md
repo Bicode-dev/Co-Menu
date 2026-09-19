@@ -19,6 +19,30 @@
 
 ---
 
+## Aperçu
+
+<img src="images/01-boutique.png" width="820" alt="La boutique sur Windows : toutes les applications publiées, avec « Installer », « Lancer » ou « Mettre à jour » selon ce qui est déjà sur la machine.">
+
+*La boutique sur Windows : toutes les applications publiées, avec « Installer », « Lancer » ou « Mettre à jour » selon ce qui est déjà sur la machine.*
+
+<img src="images/02-fiche.png" width="820" alt="La fiche d'une application : ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.">
+
+*La fiche d'une application : ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.*
+
+<img src="images/03-bibliotheque.png" width="820" alt="La bibliothèque : ce qui est installé, avec la version, un bouton « Tout mettre à jour » quand il y a du retard, et l'épingle pour garder une application en tête.">
+
+*La bibliothèque : ce qui est installé, avec la version, un bouton « Tout mettre à jour » quand il y a du retard, et l'épingle pour garder une application en tête.*
+
+<img src="images/04-telephone-boutique.png" width="280" alt="La même boutique sur Android, en liste.">
+
+*La même boutique sur Android, en liste.*
+
+<img src="images/05-telephone-fiche.png" width="280" alt="Une fiche sur Android, avant d'installer.">
+
+*Une fiche sur Android, avant d'installer.*
+
+---
+
 ## Le problème, tel qu'il se pose
 
 Vous avez installé Co-Craft il y a trois mois. Une version 3.48 est sortie
