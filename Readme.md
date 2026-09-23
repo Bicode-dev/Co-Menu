@@ -25,9 +25,9 @@
 
 *La boutique sur Windows : toutes les applications publiées, avec « Installer », « Lancer » ou « Mettre à jour » selon ce qui est déjà sur la machine.*
 
-<img src="images/02-fiche.png" width="820" alt="La fiche d'une application : ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.">
+<img src="images/02-fiche.png" width="820" alt="La fiche d'une application : ses captures, ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.">
 
-*La fiche d'une application : ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.*
+*La fiche d'une application : ses captures, ce qu'elle fait, ce qui est publié, les nouveautés de la version, et le seul bouton qui compte.*
 
 <img src="images/03-bibliotheque.png" width="820" alt="La bibliothèque : ce qui est installé, avec la version, un bouton « Tout mettre à jour » quand il y a du retard, et l'épingle pour garder une application en tête.">
 
@@ -40,6 +40,10 @@
 <img src="images/05-telephone-fiche.png" width="280" alt="Une fiche sur Android, avant d'installer.">
 
 *Une fiche sur Android, avant d'installer.*
+
+<img src="images/06-partenariat.png" width="820" alt="Une application en partenariat : l'auteur est nommé, et l'avertissement vient avant tout le reste.">
+
+*Une application en partenariat : l'auteur est nommé, et l'avertissement vient avant tout le reste.*
 
 ---
 
