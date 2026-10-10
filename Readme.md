@@ -94,9 +94,11 @@ près.
 <td width="60" align="center">⛏️</td>
 <td>
 
-**Co-Craft** — *Launcher Minecraft*
-Comptes Microsoft, versions, Forge et Fabric, modpacks Modrinth, sauvegarde des
-mondes. Vos jetons de compte sont chiffrés au repos et effacés après la partie.
+**Co-Craft** — *Launcher Minecraft, Java et Bedrock*
+Comptes Microsoft, versions, Forge, Fabric et NeoForge, modpacks Modrinth,
+sauvegarde des mondes, multijoueur local à la manette, et vos propres serveurs
+si vous le voulez. Vos jetons de compte sont chiffrés au repos et effacés après
+la partie.
 
 <sub>💻 Windows · 🐧 Linux</sub>
 
@@ -111,6 +113,104 @@ Recherche, liste de suivi, reprise là où vous vous étiez arrêté, saut de
 générique, lecture hors ligne. Aucun compte, aucune publicité.
 
 <sub>💻 Windows · 🐧 Linux · 📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">🛡️</td>
+<td>
+
+**Arcanum.block** — *Bloqueur d'appels et de SMS*
+Fondé sur le plan de numérotation officiel de l'ARCEP : numéros surtaxés,
+appels masqués, démarchage. Chaque décision est écrite dans un journal, avec
+sa raison. Rien ne quitte le téléphone.
+
+<sub>📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">🎵</td>
+<td>
+
+**Co-Musique** — *Lecteur audio* · 🧪 Accès anticipé
+Fichiers du disque, radios web, podcasts et YouTube dans un seul lecteur.
+YouTube est téléchargé, donc écoutable hors ligne. Aucun compte, aucun envoi.
+
+<sub>💻 Windows · 🐧 Linux · 📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">💤</td>
+<td>
+
+**Co-Santé** — *Suivi du sommeil*
+Chaque matin, votre dette de sommeil sur 14 jours, et pourquoi. Les nuits sont
+détectées toutes seules et se corrigent à la main. Hors ligne, données
+chiffrées.
+
+<sub>📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">💬</td>
+<td>
+
+**Co-Rappelle** — *Un fil de messages avec vous-même*
+Vous vous écrivez, vous choisissez l'heure, le message arrive avec une
+notification — même application fermée. Aucun compte, rien ne quitte
+l'appareil.
+
+<sub>💻 Windows · 📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">🦋</td>
+<td>
+
+**Co-Saturnia** — *Pronote et Atrium réunis*
+Emploi du temps, travail à faire, notes et messages Pronote, plus la boîte
+Atrium, au même endroit. La connexion se fait sur la page officielle :
+l'application ne voit jamais votre mot de passe.
+
+<sub>💻 Windows · 📱 Android</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">🎮</td>
+<td>
+
+**Co-Remote** — *Votre manette vue comme une autre* · 🧪 Accès anticipé
+Une manette PlayStation, Switch ou générique reconnue par les jeux comme une
+manette Xbox 360, ou une Xbox comme une DualShock 4, vibrations comprises. Les
+pilotes nécessaires s'installent depuis l'application.
+
+<sub>💻 Windows</sub>
+
+</td>
+</tr>
+</table>
+
+🧪 **Accès anticipé** : l'application est jeune, certains cas réels n'ont pas
+encore été essayés. Elle s'installe et se met à jour comme les autres.
+
+### En partenariat
+
+<table>
+<tr>
+<td width="60" align="center">🤝</td>
+<td>
+
+**Ney-Menu** — *La bibliothèque d'applications de colmax06*
+⚠ **Cette application n'est pas développée par Bicode_DEV.** Elle est proposée
+telle que son auteur la publie, sans aucune garantie, aucun support et aucune
+vérification de notre part.
+
+<sub>💻 Windows · 📱 Android</sub>
 
 </td>
 </tr>
