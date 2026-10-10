@@ -94,7 +94,7 @@ près.
 <td width="60" align="center">⛏️</td>
 <td>
 
-**Co-Craft** — *Launcher Minecraft, Java et Bedrock*
+**Co-Craft** — *Launcher Minecraft, Java et Bedrock*<br>
 Comptes Microsoft, versions, Forge, Fabric et NeoForge, modpacks Modrinth,
 sauvegarde des mondes, multijoueur local à la manette, et vos propres serveurs
 si vous le voulez. Vos jetons de compte sont chiffrés au repos et effacés après
@@ -108,7 +108,7 @@ la partie.
 <td width="60" align="center">🌸</td>
 <td>
 
-**Co-Chan** — *Lecteur et téléchargeur d'animes*
+**Co-Chan** — *Lecteur et téléchargeur d'animes*<br>
 Recherche, liste de suivi, reprise là où vous vous étiez arrêté, saut de
 générique, lecture hors ligne. Aucun compte, aucune publicité.
 
@@ -120,7 +120,7 @@ générique, lecture hors ligne. Aucun compte, aucune publicité.
 <td width="60" align="center">🛡️</td>
 <td>
 
-**Arcanum.block** — *Bloqueur d'appels et de SMS*
+**Arcanum.block** — *Bloqueur d'appels et de SMS*<br>
 Fondé sur le plan de numérotation officiel de l'ARCEP : numéros surtaxés,
 appels masqués, démarchage. Chaque décision est écrite dans un journal, avec
 sa raison. Rien ne quitte le téléphone.
@@ -133,7 +133,7 @@ sa raison. Rien ne quitte le téléphone.
 <td width="60" align="center">🎵</td>
 <td>
 
-**Co-Musique** — *Lecteur audio* · 🧪 Accès anticipé
+**Co-Musique** — *Lecteur audio* · 🧪 Accès anticipé<br>
 Fichiers du disque, radios web, podcasts et YouTube dans un seul lecteur.
 YouTube est téléchargé, donc écoutable hors ligne. Aucun compte, aucun envoi.
 
@@ -145,7 +145,7 @@ YouTube est téléchargé, donc écoutable hors ligne. Aucun compte, aucun envoi
 <td width="60" align="center">💤</td>
 <td>
 
-**Co-Santé** — *Suivi du sommeil*
+**Co-Santé** — *Suivi du sommeil*<br>
 Chaque matin, votre dette de sommeil sur 14 jours, et pourquoi. Les nuits sont
 détectées toutes seules et se corrigent à la main. Hors ligne, données
 chiffrées.
@@ -158,7 +158,7 @@ chiffrées.
 <td width="60" align="center">💬</td>
 <td>
 
-**Co-Rappelle** — *Un fil de messages avec vous-même*
+**Co-Rappelle** — *Un fil de messages avec vous-même*<br>
 Vous vous écrivez, vous choisissez l'heure, le message arrive avec une
 notification — même application fermée. Aucun compte, rien ne quitte
 l'appareil.
@@ -171,7 +171,7 @@ l'appareil.
 <td width="60" align="center">🦋</td>
 <td>
 
-**Co-Saturnia** — *Pronote et Atrium réunis*
+**Co-Saturnia** — *Pronote et Atrium réunis*<br>
 Emploi du temps, travail à faire, notes et messages Pronote, plus la boîte
 Atrium, au même endroit. La connexion se fait sur la page officielle :
 l'application ne voit jamais votre mot de passe.
@@ -184,7 +184,7 @@ l'application ne voit jamais votre mot de passe.
 <td width="60" align="center">🎮</td>
 <td>
 
-**Co-Remote** — *Votre manette vue comme une autre* · 🧪 Accès anticipé
+**Co-Remote** — *Votre manette vue comme une autre* · 🧪 Accès anticipé<br>
 Une manette PlayStation, Switch ou générique reconnue par les jeux comme une
 manette Xbox 360, ou une Xbox comme une DualShock 4, vibrations comprises. Les
 pilotes nécessaires s'installent depuis l'application.
@@ -205,7 +205,7 @@ encore été essayés. Elle s'installe et se met à jour comme les autres.
 <td width="60" align="center">🤝</td>
 <td>
 
-**Ney-Menu** — *La bibliothèque d'applications de colmax06*
+**Ney-Menu** — *La bibliothèque d'applications de colmax06*<br>
 ⚠ **Cette application n'est pas développée par Bicode_DEV.** Elle est proposée
 telle que son auteur la publie, sans aucune garantie, aucun support et aucune
 vérification de notre part.
