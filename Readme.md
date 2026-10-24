@@ -79,6 +79,24 @@ Installer sous Windows, sous Linux et sur Android, ce sont trois mécaniques
 complètement différentes. Co-Menu les connaît toutes les trois et vous n'en
 voyez aucune : vous appuyez sur **Installer**, puis sur **Lancer**.
 
+### 🎮 Un accueil de console
+
+Comme sur une console de jeu : l'application choisie occupe tout l'écran — ses
+couleurs, sa capture, son nom en grand — et une rangée d'icônes en bas permet
+d'en changer, à la souris ou aux flèches du clavier. La boutique et la
+bibliothèque présentent les applications en **affiches**, comme des jaquettes.
+
+La bibliothèque vous propose de **reprendre** la dernière application lancée,
+trie, filtre, cherche, et montre en bas ce que vous n'avez pas encore. Sur
+Android, la barre du bas est en **verre liquide**, à la manière des iPhone.
+
+### 🧹 Désinstaller sans surprise
+
+Avant de confirmer, Co-Menu dit ce qui part et ce qui reste — sous Windows,
+vos réglages et vos données restent, une réinstallation les retrouve. On
+confirme **en maintenant** le bouton : un clic de trop ne suffit pas. Et
+« désinstallé » ne s'affiche que lorsque c'est vrai.
+
 ### 🌌 Et c'est beau
 
 Un fond de galaxie animé, des panneaux en verre dépoli, six thèmes — ou votre
@@ -188,6 +206,19 @@ l'application ne voit jamais votre mot de passe.
 Une manette PlayStation, Switch ou générique reconnue par les jeux comme une
 manette Xbox 360, ou une Xbox comme une DualShock 4, vibrations comprises. Les
 pilotes nécessaires s'installent depuis l'application.
+
+<sub>💻 Windows</sub>
+
+</td>
+</tr>
+<tr>
+<td width="60" align="center">🪐</td>
+<td>
+
+**Co-Novadéo** — *Le téléchargeur universel*<br>
+Collez un lien, choisissez parmi 35 formats — vidéo, audio, image, GIF,
+sous-titres — c'est téléchargé. Plus de 1000 sites, Spotify et Deezer compris ;
+le moteur se tient à jour tout seul.
 
 <sub>💻 Windows</sub>
 
