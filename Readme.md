@@ -57,6 +57,10 @@
 
 *Désinstaller : ce qui part, ce qui reste, et un bouton à maintenir — un clic de trop ne suffit pas.*
 
+<img src="images/17-reglages.png" width="820" alt="Les réglages : sept rubriques, et un aperçu qui montre en direct la couleur, le verre et la taille choisis.">
+
+*Les réglages : sept rubriques, et un aperçu qui montre en direct la couleur, le verre et la taille choisis.*
+
 ---
 
 ## Le problème, tel qu'il se pose
