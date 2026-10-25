@@ -94,8 +94,9 @@ voyez aucune : vous appuyez sur **Installer**, puis sur **Lancer**.
 ### 🎮 Un accueil de console
 
 Comme sur une console de jeu : l'application choisie occupe tout l'écran — ses
-couleurs, sa capture, son nom en grand — et une rangée d'icônes en bas permet
-d'en changer, à la souris ou aux flèches du clavier. La boutique et la
+couleurs, sa bannière ou son logo, son nom en grand — et une rangée d'icônes
+en bas permet d'en changer, instantanément, à la souris ou aux flèches du
+clavier. La boutique et la
 bibliothèque présentent les applications en **affiches**, comme des jaquettes.
 
 La bibliothèque vous propose de **reprendre** la dernière application lancée,
@@ -109,11 +110,13 @@ vos réglages et vos données restent, une réinstallation les retrouve. On
 confirme **en maintenant** le bouton : un clic de trop ne suffit pas. Et
 « désinstallé » ne s'affiche que lorsque c'est vrai.
 
-### 🌌 Et c'est beau
+### 🌌 Et c'est à votre goût
 
-Un fond de galaxie animé, des panneaux en verre dépoli, six thèmes — ou votre
-propre image en fond d'écran, avec le flou que vous choisissez, au pourcentage
-près.
+Quinze couleurs, huit décors — ou votre propre image en fond d'écran, avec le
+flou que vous choisissez, au pourcentage près. Les réglages vont plus loin :
+taille du texte, vitesse des animations, opacité du verre, onglet d'ouverture,
+fréquence de vérification des versions. Sur PC, la barre de titre fait partie
+de l'application.
 
 ---
 
@@ -192,19 +195,6 @@ chiffrées.
 Vous vous écrivez, vous choisissez l'heure, le message arrive avec une
 notification — même application fermée. Aucun compte, rien ne quitte
 l'appareil.
-
-<sub>💻 Windows · 📱 Android</sub>
-
-</td>
-</tr>
-<tr>
-<td width="60" align="center">🦋</td>
-<td>
-
-**Co-Saturnia** — *Pronote et Atrium réunis*<br>
-Emploi du temps, travail à faire, notes et messages Pronote, plus la boîte
-Atrium, au même endroit. La connexion se fait sur la page officielle :
-l'application ne voit jamais votre mot de passe.
 
 <sub>💻 Windows · 📱 Android</sub>
 
